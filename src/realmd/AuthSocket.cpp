@@ -184,6 +184,7 @@ AuthSocket::AuthSocket()
     N.SetHexStr("894B645E89E1535BBDAD5B8B290650530801B18EBFBF5E8FAB3C82872A3E9BB7");
     g.SetDword(7);
     _authed = false;
+    _autoreg = sConfig.GetIntDefault("UseAutoReg", 0) != 0;
 
     _accountSecurityLevel = SEC_PLAYER;
 
@@ -513,7 +514,52 @@ bool AuthSocket::_HandleLogonChallenge()
         }
         else                                                // no account
         {
-            pkt << (uint8) WOW_FAIL_UNKNOWN_ACCOUNT;
+            if (_autoreg)
+            {
+                ///- Get the password from the account table, upper it, and make the SRP6 calculation
+                std::transform(_safelogin.begin(), _safelogin.end(), _safelogin.begin(), std::towupper);
+                Sha1Hash sha;
+                std::string sI = _safelogin + ":" + _safelogin;
+                sha.UpdateData(sI);
+                sha.Finalize();
+
+                BigNumber bn;
+                bn.SetBinary(sha.GetDigest(), sha.GetLength());
+                uint8 *val = bn.AsByteArray();
+                std::reverse(val, val + bn.GetNumBytes());
+                bn.SetBinary(val, bn.GetNumBytes());
+
+                const char* rI = bn.AsHexStr();
+                _SetVSFields(rI);
+                OPENSSL_free((void*)rI);
+
+                b.SetRand(19 * 8);
+                BigNumber gmod = g.ModExp(b, N);
+                B = ((v * 3) + gmod) % N;
+
+                if (B.GetNumBytes() < 32)
+                    sLog.outDetail("Interesting, calculation of B in realmd is < 32.");
+
+                MANGOS_ASSERT(gmod.GetNumBytes() <= 32);
+
+                BigNumber unk3;
+                unk3.SetRand(16 * 8);
+
+                ///- Fill the response packet with the result
+                pkt << (uint8)WOW_SUCCESS;
+                pkt.append(B.AsByteArray(), 32);
+                pkt << (uint8)1;
+                pkt.append(g.AsByteArray(), 1);
+                pkt << (uint8)32;
+                pkt.append(N.AsByteArray(), 32);
+                pkt.append(s.AsByteArray(), s.GetNumBytes());
+                pkt.append(unk3.AsByteArray(), 16);
+                pkt << (uint8)0;                // Added in 1.12.x client branch
+            }
+            else
+            {
+                pkt << (uint8)WOW_FAIL_UNKNOWN_ACCOUNT;
+            }
         }
     }
     send((char const*)pkt.contents(), pkt.size());
@@ -669,12 +715,34 @@ bool AuthSocket::_HandleLogonProof()
     ///- Check if SRP6 results match (password is correct), else send an error
     if (!memcmp(M.AsByteArray(), lp.M1, 20))
     {
+        //create new account if use auto registration
+        if (_autoreg)
+        {
+            QueryResult *result2 = LoginDatabase.PQuery("SELECT id FROM account where username='%s'", _login.c_str());
+            if (result2) //already exist
+            {
+                _autoreg = false;
+            }
+            else
+            {
+                LoginDatabase.PExecute("INSERT INTO account (username,sha_pass_hash,joindate) VALUES ('%s',SHA1(CONCAT(UPPER('%s'),':',UPPER('%s'))),NOW())", _safelogin.c_str(), _safelogin.c_str(), _safelogin.c_str());
+                sLog.outBasic("New account [%s] created successfully", _login.c_str());
+            }
+            delete result2;
+        }
         BASIC_LOG("User '%s' successfully authenticated", _login.c_str());
 
         ///- Update the sessionkey, last_ip, last login time and reset number of failed logins in the account table for this account
         // No SQL injection (escaped user name) and IP address as received by socket
         const char* K_hex = K.AsHexStr();
-        LoginDatabase.PExecute("UPDATE account SET sessionkey = '%s', last_ip = '%s', last_login = NOW(), locale = '%u', failed_logins = 0 WHERE username = '%s'", K_hex, get_remote_address().c_str(), GetLocaleByName(_localizationName), _safelogin.c_str());
+        if (_autoreg)
+        {
+            LoginDatabase.PExecute("UPDATE account SET gmlevel = 3, expansion = 2, sessionkey = '%s', last_ip = '%s', last_login = NOW(), locale = 2, failed_logins = 0 WHERE username = '%s'", K_hex, get_remote_address().c_str(), _login.c_str());
+        }
+        else
+        {
+            LoginDatabase.PExecute("UPDATE account SET sessionkey = '%s', last_ip = '%s', last_login = NOW(), locale = '%u', failed_logins = 0 WHERE username = '%s'", K_hex, get_remote_address().c_str(), GetLocaleByName(_localizationName), _safelogin.c_str());
+        }
         OPENSSL_free((void*)K_hex);
 
         ///- Finish SRP6 and send the final result to the client

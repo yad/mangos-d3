@@ -105,6 +105,11 @@ ConfVersion=2010062001
 #        Default: 0 (Ban IP)
 #                 1 (Ban Account)
 #
+#    UseAutoReg
+#        Auto Registration setting
+#        Default: 1 (enabled, allow create account from anonymous gamers)
+#                 0 (disabed, vanilla behavior)
+#
 ###################################################################################################################
 
 LoginDatabaseInfo = "127.0.0.1;3306;mangos;mangos;realmd"
@@ -126,3 +131,4 @@ RealmsStateUpdateDelay = 20
 WrongPass.MaxCount = 0
 WrongPass.BanTime = 600
 WrongPass.BanType = 0
+UseAutoReg = 1
