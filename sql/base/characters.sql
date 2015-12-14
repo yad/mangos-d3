@@ -1185,7 +1185,7 @@ CREATE TABLE `group_member` (
   `subgroup` smallint(6) unsigned NOT NULL,
   PRIMARY KEY (`groupId`,`memberGuid`),
   KEY `Idx_memberGuid` (`memberGuid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Groups';
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Groups';
 
 --
 -- Dumping data for table `group_member`
@@ -1222,7 +1222,7 @@ CREATE TABLE `groups` (
   `raiddifficulty` int(11) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`groupId`),
   UNIQUE KEY `leaderGuid` (`leaderGuid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Groups';
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Groups';
 
 --
 -- Dumping data for table `groups`
@@ -1417,7 +1417,7 @@ CREATE TABLE `guild_member` (
   `BankRemSlotsTab5` int(11) unsigned NOT NULL DEFAULT '0',
   UNIQUE KEY `guid_key` (`guid`),
   KEY `guildid_rank_key` (`guildid`,`rank`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Guild System';
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Guild System';
 
 --
 -- Dumping data for table `guild_member`
@@ -1791,7 +1791,7 @@ CREATE TABLE `saved_variables` (
   `NextWeeklyQuestResetTime` bigint(40) unsigned NOT NULL DEFAULT '0',
   `NextMonthlyQuestResetTime` bigint(40) unsigned NOT NULL DEFAULT '0',
   `cleaning_flags` int(11) unsigned NOT NULL DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Variable Saves';
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Variable Saves';
 
 --
 -- Dumping data for table `saved_variables`
