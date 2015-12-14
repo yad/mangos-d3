@@ -407,6 +407,9 @@ void Log::outString(const char* str, ...)
 
 void Log::outError(const char* err, ...)
 {
+    if (m_logLevel < LOG_LVL_BASIC)
+        return;
+
     if (!err)
         return;
 
@@ -444,6 +447,9 @@ void Log::outError(const char* err, ...)
 
 void Log::outErrorDb()
 {
+    if (m_logLevel < LOG_LVL_BASIC)
+        return;
+
     if (m_includeTime)
         outTime();
 
@@ -468,6 +474,9 @@ void Log::outErrorDb()
 
 void Log::outErrorDb(const char* err, ...)
 {
+    if (m_logLevel < LOG_LVL_BASIC)
+        return;
+
     if (!err)
         return;
 
