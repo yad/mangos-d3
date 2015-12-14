@@ -1350,6 +1350,34 @@ void Player::Update(uint32 update_diff, uint32 p_time)
 
         if (!m_regenTimer)
             RegenerateAll();
+
+        if (this->isInCombat())
+        {
+            if (this->isMoving())
+            {
+                this->AttackStop();
+            }
+            else
+            {
+                Unit* victim = this->getVictim();
+                if (!victim)
+                {
+                    victim = this->getAttackerForHelper();
+                    if (victim && this->IsWithinDist(victim, ATTACK_DISTANCE))
+                    {
+                        this->Attack(victim, true);
+                    }
+                }
+
+                if (victim)
+                {
+                    if (!this->isInFront(victim, ATTACK_DISTANCE))
+                    {
+                        this->SetFacingToObject(victim);
+                    }
+                }
+            }
+        }
     }
 
     if (m_deathState == JUST_DIED)
