@@ -25,6 +25,7 @@
 #include "ace/Recursive_Thread_Mutex.h"
 #include "Map.h"
 #include "GridStates.h"
+#include "ObjectAccessor.h"
 
 class Transport;
 class BattleGround;
@@ -89,6 +90,27 @@ class MapManager : public MaNGOS::Singleton<MapManager, MaNGOS::ClassLevelLockab
         }
 
         void UnloadAll();
+
+        void SetMaxPlayerLevel()
+        {
+            uint32 level = 1;
+            HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
+            for (HashMapHolder<Player>::MapType::iterator iter = m.begin(); iter != m.end(); ++iter)
+            {
+                if (iter->second->IsInWorld())
+                {
+                    uint32 currentPlayerLevel = iter->second->getLevel();
+                    level = currentPlayerLevel > level ? currentPlayerLevel : level;
+                }
+            }
+
+            m_maxPlayerLevel = level;
+        }
+
+        uint32 GetMaxPlayerLevel() const
+        {
+            return m_maxPlayerLevel;
+        }
 
         static bool ExistMapAndVMap(uint32 mapid, float x, float y);
         static bool IsValidMAP(uint32 mapid);
@@ -174,6 +196,8 @@ class MapManager : public MaNGOS::Singleton<MapManager, MaNGOS::ClassLevelLockab
         uint32 i_gridCleanUpDelay;
         MapMapType i_maps;
         IntervalTimer i_timer;
+
+        uint32 m_maxPlayerLevel = 1;
 };
 
 template<typename Do>

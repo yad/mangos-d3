@@ -796,6 +796,20 @@ class ObjectMgr
             return nullptr;
         }
 
+        bool IsUniqueCreature(uint32 entry) const
+        {
+            int creatureCounter = 0;
+            for (CreatureDataMap::const_iterator itr = mCreatureDataMap.begin(); itr != mCreatureDataMap.end(); ++itr)
+            {
+                if (itr->second.id == entry)
+                {
+                    creatureCounter++;
+                }
+            }
+
+            return creatureCounter == 1;
+        }
+
         CreatureDataPair const* GetCreatureDataPair(uint32 guid) const
         {
             CreatureDataMap::const_iterator itr = mCreatureDataMap.find(guid);

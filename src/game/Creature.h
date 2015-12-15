@@ -496,7 +496,6 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
         explicit Creature(CreatureSubtype subtype = CREATURE_SUBTYPE_GENERIC);
         virtual ~Creature();
-
         void AddToWorld() override;
         void RemoveFromWorld() override;
 
@@ -772,6 +771,11 @@ class MANGOS_DLL_SPEC Creature : public Unit
         MovementGeneratorType m_defaultMovementType;
         Cell m_currentCell;                                 // store current cell where creature listed
         uint32 m_equipmentId;
+
+        void SetEliteIfChosen();
+        bool CanBeModded();
+        void SummonCreaturePool();
+        void SetStatsBasedOnPlayerMaxLevel();
 
         // below fields has potential for optimization
         bool m_AlreadyCallAssistance;

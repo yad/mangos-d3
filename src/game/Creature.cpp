@@ -177,6 +177,10 @@ void Creature::AddToWorld()
     std::set<uint32> const* mapList = sWorld.getConfigForceLoadMapIds();
     if ((mapList && mapList->find(GetMapId()) != mapList->end()) || (GetCreatureInfo()->ExtraFlags & CREATURE_FLAG_EXTRA_ACTIVE))
         SetActiveObjectState(true);
+
+    SetEliteIfChosen();
+
+    SummonCreaturePool();
 }
 
 void Creature::RemoveFromWorld()
@@ -356,6 +360,8 @@ bool Creature::InitEntry(uint32 Entry, CreatureData const* data /*=nullptr*/, Ga
 
     // checked at loading
     m_defaultMovementType = MovementGeneratorType(cinfo->MovementType);
+
+
 
     return true;
 }
@@ -612,7 +618,10 @@ void Creature::Update(uint32 update_diff, uint32 diff)
             // CORPSE/DEAD state will processed at next tick (in other case death timer will be updated unexpectedly)
             if (!isAlive())
                 break;
+
             RegenerateAll(update_diff);
+
+            this->SetStatsBasedOnPlayerMaxLevel();
             break;
         }
         default:
@@ -2742,4 +2751,71 @@ bool Creature::IsTappedBy(Player* plr) const
         return false;
     }
     return false;
+}
+
+void Creature::SetStatsBasedOnPlayerMaxLevel()
+{
+    uint32 maxPlayerLevel = sMapMgr.GetMaxPlayerLevel();
+    uint32 currentLevel = this->getLevel();
+    if (currentLevel != maxPlayerLevel)
+    {
+        float ratio = float(maxPlayerLevel) / float(currentLevel);
+
+        this->SetLevel(maxPlayerLevel);
+
+        this->SetHealth(this->GetHealth() * ratio);
+        this->SetMaxHealth(this->GetMaxHealth() * ratio);
+
+        Powers currentPower = this->GetPowerType();
+        this->SetPower(currentPower, this->GetPower(currentPower) * ratio);
+        this->SetMaxPower(currentPower, this->GetMaxPower(currentPower) * ratio);
+
+        this->SetArmor(this->GetArmor() * ratio);
+
+        this->SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, this->m_weaponDamage[BASE_ATTACK][MINDAMAGE] * ratio);
+        this->SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, this->m_weaponDamage[BASE_ATTACK][MAXDAMAGE] * ratio);
+
+        this->SetBaseWeaponDamage(OFF_ATTACK, MINDAMAGE, this->m_weaponDamage[OFF_ATTACK][MINDAMAGE] * ratio);
+        this->SetBaseWeaponDamage(OFF_ATTACK, MAXDAMAGE, this->m_weaponDamage[OFF_ATTACK][MAXDAMAGE] * ratio);
+
+        this->SetFloatValue(UNIT_FIELD_MINRANGEDDAMAGE, this->m_floatValues[UNIT_FIELD_MINRANGEDDAMAGE] * ratio);
+        this->SetFloatValue(UNIT_FIELD_MAXRANGEDDAMAGE, this->m_floatValues[UNIT_FIELD_MAXRANGEDDAMAGE] * ratio);
+
+        SetModifierValue(UNIT_MOD_ATTACK_POWER, BASE_VALUE, this->m_auraModifiersGroup[UNIT_MOD_ATTACK_POWER][BASE_VALUE] * ratio);
+    }
+}
+
+bool Creature::CanBeModded()
+{
+    return !this->IsTemporarySummon() && !this->IsWorldBoss() && this->GetUInt32Value(UNIT_NPC_FLAGS) == UNIT_NPC_FLAG_NONE && this->IsHostileToPlayers() && !sObjectMgr.IsUniqueCreature(GetCreatureInfo()->Entry);
+}
+
+void Creature::SetEliteIfChosen()
+{
+    if (this->CanBeModded())
+    {
+        bool isElite = urand(1, 5) == 1;
+        if (isElite)
+        {
+            this->SetObjectScale(this->GetObjectScale() * 1.5f);
+            //this->SetResistance();
+        }
+    }
+}
+
+static float summonPositionsX[] = { 0.0f, ATTACK_DISTANCE, -ATTACK_DISTANCE, ATTACK_DISTANCE, -ATTACK_DISTANCE };
+static float summonPositionsY[] = { 0.0f, ATTACK_DISTANCE, ATTACK_DISTANCE, -ATTACK_DISTANCE, -ATTACK_DISTANCE };
+
+void Creature::SummonCreaturePool()
+{
+    if (this->CanBeModded())
+    {
+        for (int i = 0; i < urand(0, 4); i++)
+        {
+            Creature* creature = this->SummonCreature(GetCreatureInfo()->Entry, this->GetPositionX() + summonPositionsX[i], this->GetPositionY() + summonPositionsY[i], this->GetPositionZ(), 0.0, TEMPSUMMON_DEAD_DESPAWN, 0);
+            creature->SetRespawnTime(this->GetRespawnTime());
+            creature->SetRespawnRadius(this->GetRespawnRadius());
+            creature->SetRespawnDelay(this->GetRespawnDelay());
+        }
+    }
 }
