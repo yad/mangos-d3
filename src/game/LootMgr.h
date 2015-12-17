@@ -246,6 +246,7 @@ class LootTemplate
         // Checks integrity of the template
         void Verify(LootStore const& store, uint32 Id) const;
         void CheckLootRefs(LootIdSet* ref_set) const;
+
     private:
         LootStoreItemList Entries;                          // not grouped only
         LootGroups        Groups;                           // groups have own (optimized) processing, grouped entries go there
@@ -308,6 +309,11 @@ private:
     void SetGroupLootRight(Player* player);
     void GenerateMoneyLoot(uint32 minAmount, uint32 maxAmount);
     bool FillLoot(uint32 loot_id, LootStore const& store, Player* loot_owner, bool personal, bool noEmptyError = false);
+    void SanitizeLootRemovePoorAndWeaponOrArmorItems();
+    void BuildNewLootTable(Player* lootOwner);
+    static uint32 GetCurrentMinLevel(uint32 currentMaxLevel);
+    static bool CanItemBeUsedByPlayer(ItemPrototype const* pProto, Player* player);
+    static bool CanItemBeUsedByLootOwnerOrGroupMember(ItemPrototype const* pProto, Player* lootOwner);
     void AddConditionnalItem(ObjectGuid playerGuid, uint32 itemSlot);
     void RemoveConditionnalItem(ObjectGuid playerGuid, uint32 itemSlot);
     void ForceLootAnimationCLientUpdate();

@@ -633,6 +633,11 @@ struct ItemPrototype
         return false;
     }
 
+    bool IsWeaponOrArmor() const
+    {
+        return this->Class == ITEM_CLASS_WEAPON || this->Class == ITEM_CLASS_ARMOR;
+    }
+
     uint32 GetMaxStackSize() const { return Stackable > 0 ? uint32(Stackable) : uint32(0x7FFFFFFF - 1); }
 
     float getDPS() const

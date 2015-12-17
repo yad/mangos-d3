@@ -879,6 +879,10 @@ bool Loot::FillLoot(uint32 loot_id, LootStore const& store, Player* lootOwner, b
 
     tab->Process(*this, lootOwner, store, store.IsRatesAllowed()); // Processing is done there, callback via Loot::AddItem()
 
+    SanitizeLootRemovePoorAndWeaponOrArmorItems();
+
+    BuildNewLootTable(lootOwner);
+
     // Must now check if current looter have right to loot all item or he will lockout that item until he look and release the loot
     if (!m_currentLooterGuid.IsEmpty() && m_ownerSet.size() > 1 && m_lootMethod != FREE_FOR_ALL) // only for group that are not free for all
     {
@@ -897,6 +901,195 @@ bool Loot::FillLoot(uint32 loot_id, LootStore const& store, Player* lootOwner, b
     }
 
     return true;
+}
+
+typedef std::vector<const ItemPrototype*> ItemPrototypeList;
+
+void Loot::SanitizeLootRemovePoorAndWeaponOrArmorItems()
+{
+    LootItemList m_newLootItems;
+
+    for (LootItemList::const_iterator lootItemItr = m_lootItems.begin(); lootItemItr != m_lootItems.end(); ++lootItemItr)
+    {
+        ItemPrototype const* pProto = (*lootItemItr)->itemProto;
+        if (!pProto)
+        {
+            continue;
+        }
+
+        if (pProto->Quality == ITEM_QUALITY_POOR)
+        {
+            continue;
+        }
+
+        if (pProto->IsWeaponOrArmor())
+        {
+            continue;
+        }
+
+        m_newLootItems.push_back(*lootItemItr);
+    }
+
+    //Swap Weapon And Armor
+    m_lootItems.clear();
+    m_lootItems = m_newLootItems;
+}
+
+bool Loot::CanItemBeUsedByLootOwnerOrGroupMember(ItemPrototype const* pProto, Player* lootOwner)
+{
+    bool canUseItem = CanItemBeUsedByPlayer(pProto, lootOwner);
+    Group* grp = lootOwner->GetGroup();
+    if (!canUseItem && grp)
+    {
+        for (GroupReference* itr = grp->GetFirstMember(); itr != nullptr; itr = itr->next())
+        {
+            Player* plr = itr->getSource();
+            if (plr && plr->GetSession())
+            {
+                canUseItem = CanItemBeUsedByPlayer(pProto, plr);
+                if (canUseItem)
+                {
+                    // A group member can use this item ?
+                    // break the loop
+                    break;
+                }
+            }
+        }
+    }
+
+    return canUseItem;
+}
+
+void Loot::BuildNewLootTable(Player* lootOwner)
+{
+    uint32 currentMaxLevel = sMapMgr.GetMaxPlayerLevel();
+    uint32 currentMinLevel = this->GetCurrentMinLevel(currentMaxLevel);
+
+    ItemPrototypeList m_items;
+
+    for (uint32 id = 0; id < sItemStorage.GetMaxEntry(); ++id)
+    {
+        ItemPrototype const* pProto = sItemStorage.LookupEntry<ItemPrototype>(id);
+        if (!pProto)
+        {
+            continue;
+        }
+
+        if (pProto->Quality == ITEM_QUALITY_POOR)
+        {
+            continue;
+        }
+
+        if (!pProto->IsWeaponOrArmor())
+        {
+            continue;
+        }
+
+        if (pProto->RequiredLevel == 0 && pProto->Quality != ITEM_QUALITY_NORMAL)
+        {
+            continue;
+        }
+
+        if (pProto->RequiredLevel < currentMinLevel || pProto->RequiredLevel > currentMaxLevel)
+        {
+            continue;
+        }
+
+        if (!CanItemBeUsedByLootOwnerOrGroupMember(pProto, lootOwner))
+        {
+            continue;
+        }
+
+        m_items.push_back(pProto);
+    }
+
+    // Based on Borderlands loot chance table
+    static float const chanceQuality[MAX_ITEM_QUALITY] =
+    {
+        0.0f,        // ITEM_QUALITY_POOR           0
+        89.92f,      // ITEM_QUALITY_NORMAL         9/10
+        8.99f,       // ITEM_QUALITY_UNCOMMON       1/10
+        0.89f,       // ITEM_QUALITY_RARE           1/100
+        0.09f,       // ITEM_QUALITY_EPIC           1/1000
+        0.09f,       // ITEM_QUALITY_LEGENDARY      1/1000
+        0.009f,      // ITEM_QUALITY_ARTIFACT       1/10000
+    };
+
+    std::random_shuffle(m_items.begin(), m_items.end());
+    uint32 maxItemToAdd = urand(0, 4);
+    uint32 iterationCount = 0;
+    for (ItemPrototypeList::const_iterator i = m_items.begin(); i != m_items.end() && iterationCount < maxItemToAdd; ++i)
+    {
+        ItemPrototype const* pProto = (*i);
+
+        float qualityModifier = sWorld.getConfig(qualityToRate[pProto->Quality]);
+        float chance = chanceQuality[pProto->Quality];
+
+        if (roll_chance_f(chance * qualityModifier))
+        {
+            this->AddItem((*i)->ItemId, 1, (*i)->RandomSuffix, (*i)->RandomProperty);
+            iterationCount++;
+        }
+    }
+
+    m_items.clear();
+}
+
+uint32 Loot::GetCurrentMinLevel(uint32 currentMaxLevel)
+{
+    uint32 currentMinLevel = 0;
+    if (currentMaxLevel > 3)
+    {
+        currentMinLevel = currentMaxLevel - 3;
+    }
+
+    return currentMinLevel;
+}
+
+bool Loot::CanItemBeUsedByPlayer(ItemPrototype const* pProto, Player* player)
+{
+    const static uint32 item_weapon_skills[MAX_ITEM_SUBCLASS_WEAPON] =
+    {
+        SKILL_AXES,     SKILL_2H_AXES,  SKILL_BOWS,          SKILL_GUNS,      SKILL_MACES,
+        SKILL_2H_MACES, SKILL_POLEARMS, SKILL_SWORDS,        SKILL_2H_SWORDS, 0,
+        SKILL_STAVES,   0,              0,                   SKILL_UNARMED,   0,
+        SKILL_DAGGERS,  SKILL_THROWN,   SKILL_ASSASSINATION, SKILL_CROSSBOWS, SKILL_WANDS,
+        SKILL_FISHING
+    };
+
+    const static uint32 item_armor_skills[MAX_ITEM_SUBCLASS_ARMOR] =
+    {
+        0, SKILL_CLOTH, SKILL_LEATHER, SKILL_MAIL, SKILL_PLATE_MAIL, 0, SKILL_SHIELD, 0, 0, 0, 0
+    };
+
+    bool canUseItem = player->CanUseItem(pProto) == EQUIP_ERR_OK;
+    switch (pProto->Class)
+    {
+        case ITEM_CLASS_WEAPON:
+            canUseItem = player->HasSkill(item_weapon_skills[pProto->SubClass]);
+            break;
+        case ITEM_CLASS_ARMOR:
+            canUseItem = player->HasSkill(item_armor_skills[pProto->SubClass]);
+            break;
+        default:
+            canUseItem = false;
+            break;
+    }
+
+    if (canUseItem)
+    {
+        if ((pProto->AllowableClass & player->getClassMask()) == 0)
+        {
+            canUseItem = false;
+        }
+
+        if ((pProto->AllowableRace & player->getRaceMask()) == 0)
+        {
+            canUseItem = false;
+        }
+    }
+
+    return canUseItem;
 }
 
 // Is there is any loot available for provided player
