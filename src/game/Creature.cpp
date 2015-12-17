@@ -2800,8 +2800,8 @@ void Creature::SetStatsBasedOnPlayerMaxLevel()
         this->SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, player->GetWeaponDamageRange(BASE_ATTACK, MINDAMAGE) * difficulty);
         this->SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, player->GetWeaponDamageRange(BASE_ATTACK, MAXDAMAGE) * difficulty);
 
-        this->SetBaseWeaponDamage(OFF_ATTACK, MINDAMAGE, player->GetWeaponDamageRange(OFF_ATTACK, MINDAMAGE) * difficulty);
-        this->SetBaseWeaponDamage(OFF_ATTACK, MAXDAMAGE, player->GetWeaponDamageRange(OFF_ATTACK, MAXDAMAGE) * difficulty);
+        //this->SetBaseWeaponDamage(OFF_ATTACK, MINDAMAGE, player->GetWeaponDamageRange(OFF_ATTACK, MINDAMAGE) * difficulty);
+        //this->SetBaseWeaponDamage(OFF_ATTACK, MAXDAMAGE, player->GetWeaponDamageRange(OFF_ATTACK, MAXDAMAGE) * difficulty);
 
         float mobAttackTimeDiviser = 0.5f;
         this->SetFloatValue(UNIT_FIELD_BASEATTACKTIME, player->GetFloatValue(UNIT_FIELD_BASEATTACKTIME) / difficulty * mobAttackTimeDiviser);
