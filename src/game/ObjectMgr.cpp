@@ -2288,6 +2288,12 @@ void ObjectMgr::LoadItemPrototypes()
         if (proto->Bonding >= MAX_BIND_TYPE)
             sLog.outErrorDb("Item (Entry: %u) has wrong Bonding value (%u)", i, proto->Bonding);
 
+        // Do not bound item, it's not fun.
+        if (proto->Bonding < BIND_QUEST_ITEM)
+        {
+            const_cast<ItemPrototype*>(proto)->Bonding = NO_BIND;
+        }
+
         if (proto->PageText)
         {
             if (!sPageTextStore.LookupEntry<PageText>(proto->PageText))
