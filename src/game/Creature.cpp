@@ -165,6 +165,11 @@ Creature::~Creature()
     i_AI = nullptr;
 }
 
+bool Creature::IsPlayerSummon() const
+{
+    return this->GetOwner() && this->GetOwner()->GetTypeId() == TYPEID_PLAYER;
+}
+
 void Creature::AddToWorld()
 {
     ///- Register the creature for guid lookup
@@ -514,6 +519,11 @@ void Creature::Update(uint32 update_diff, uint32 diff)
             break;
         case DEAD:
         {
+            if (!IsPlayerSummon())
+            {
+                break;
+            }
+
             if (m_respawnTime <= time(nullptr) && (!m_isSpawningLinked || GetMap()->GetCreatureLinkingHolder()->CanSpawn(this)))
             {
                 DEBUG_FILTER_LOG(LOG_FILTER_AI_AND_MOVEGENSS, "Respawning...");
@@ -568,7 +578,7 @@ void Creature::Update(uint32 update_diff, uint32 diff)
             if (m_isDeadByDefault)
                 break;
 
-            if (m_corpseDecayTimer <= update_diff)
+            if (m_corpseDecayTimer <= update_diff && IsPlayerSummon())
             {
                 RemoveCorpse();
                 break;
@@ -587,7 +597,7 @@ void Creature::Update(uint32 update_diff, uint32 diff)
 
             if (m_isDeadByDefault)
             {
-                if (m_corpseDecayTimer <= update_diff)
+                if (m_corpseDecayTimer <= update_diff && IsPlayerSummon())
                 {
                     RemoveCorpse();
                     break;

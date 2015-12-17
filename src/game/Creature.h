@@ -794,6 +794,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
         Position m_respawnPos;
 
     private:
+        bool IsPlayerSummon() const;
         GridReference<Creature> m_gridRef;
         CreatureInfo const* m_creatureInfo;                 // in difficulty mode > 0 can different from ObjMgr::GetCreatureTemplate(GetEntry())
 };
