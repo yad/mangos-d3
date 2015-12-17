@@ -2294,6 +2294,9 @@ void ObjectMgr::LoadItemPrototypes()
             const_cast<ItemPrototype*>(proto)->Bonding = NO_BIND;
         }
 
+        // Do not bound item, it's not fun.
+        const_cast<ItemPrototype*>(proto)->Delay /= 3;
+
         if (proto->PageText)
         {
             if (!sPageTextStore.LookupEntry<PageText>(proto->PageText))
