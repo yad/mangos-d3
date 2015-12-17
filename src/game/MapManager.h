@@ -93,6 +93,8 @@ class MapManager : public MaNGOS::Singleton<MapManager, MaNGOS::ClassLevelLockab
 
         void SetBestPlayer()
         {
+            uint32 maxLevel = 1;
+            Player* bestPlayer = nullptr;
             HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
             for (HashMapHolder<Player>::MapType::iterator iter = m.begin(); iter != m.end(); ++iter)
             {
@@ -100,12 +102,18 @@ class MapManager : public MaNGOS::Singleton<MapManager, MaNGOS::ClassLevelLockab
                 if (pl && pl->IsInWorld())
                 {
                     uint32 currentPlayerLevel = pl->getLevel();
-                    if (m_maxPlayerLevel != currentPlayerLevel)
+                    if (maxLevel < currentPlayerLevel)
                     {
-                        m_maxPlayerLevel = currentPlayerLevel;
-                        m_bestPlayer = pl;
+                        maxLevel = currentPlayerLevel;
+                        bestPlayer = pl;
                     }
                 }
+            }
+
+            if (m_maxPlayerLevel != maxLevel)
+            {
+                m_maxPlayerLevel = maxLevel;
+                m_bestPlayer = bestPlayer;
             }
         }
 
