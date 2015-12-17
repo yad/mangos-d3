@@ -4584,33 +4584,6 @@ void Player::ResurrectPlayer(float restore_percent, bool applySickness)
     m_camera.UpdateVisibilityForOwner();
     // update visibility of player for nearby cameras
     UpdateObjectVisibility();
-
-    if (!applySickness)
-        return;
-
-    // Characters from level 1-10 are not affected by resurrection sickness.
-    // Characters from level 11-19 will suffer from one minute of sickness
-    // for each level they are above 10.
-    // Characters level 20 and up suffer from ten minutes of sickness.
-    int32 startLevel = sWorld.getConfig(CONFIG_INT32_DEATH_SICKNESS_LEVEL);
-
-    if (int32(getLevel()) >= startLevel)
-    {
-        // set resurrection sickness
-        CastSpell(this, SPELL_ID_PASSIVE_RESURRECTION_SICKNESS, true);
-
-        // not full duration
-        if (int32(getLevel()) < startLevel + 9)
-        {
-            int32 delta = (int32(getLevel()) - startLevel + 1) * MINUTE;
-
-            if (SpellAuraHolder* holder = GetSpellAuraHolder(SPELL_ID_PASSIVE_RESURRECTION_SICKNESS))
-            {
-                holder->SetAuraDuration(delta * IN_MILLISECONDS);
-                holder->SendAuraUpdate(false);
-            }
-        }
-    }
 }
 
 void Player::KillPlayer()
