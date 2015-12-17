@@ -2823,9 +2823,6 @@ void Creature::SummonCreaturePool()
         for (int i = 0; i < urand(0, 4); i++)
         {
             Creature* creature = this->SummonCreature(GetCreatureInfo()->Entry, this->GetPositionX() + summonPositionsX[i], this->GetPositionY() + summonPositionsY[i], this->GetPositionZ(), 0.0, TEMPSUMMON_DEAD_DESPAWN, 0);
-            creature->SetRespawnTime(this->GetRespawnTime());
-            creature->SetRespawnRadius(this->GetRespawnRadius());
-            creature->SetRespawnDelay(this->GetRespawnDelay());
         }
     }
 }
