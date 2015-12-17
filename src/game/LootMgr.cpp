@@ -1063,29 +1063,19 @@ bool Loot::CanItemBeUsedByPlayer(ItemPrototype const* pProto, Player* player)
     };
 
     bool canUseItem = player->CanUseItem(pProto) == EQUIP_ERR_OK;
-    switch (pProto->Class)
-    {
-        case ITEM_CLASS_WEAPON:
-            canUseItem = player->HasSkill(item_weapon_skills[pProto->SubClass]);
-            break;
-        case ITEM_CLASS_ARMOR:
-            canUseItem = player->HasSkill(item_armor_skills[pProto->SubClass]);
-            break;
-        default:
-            canUseItem = false;
-            break;
-    }
-
     if (canUseItem)
     {
-        if ((pProto->AllowableClass & player->getClassMask()) == 0)
+        switch (pProto->Class)
         {
-            canUseItem = false;
-        }
-
-        if ((pProto->AllowableRace & player->getRaceMask()) == 0)
-        {
-            canUseItem = false;
+            case ITEM_CLASS_WEAPON:
+                canUseItem = player->HasSkill(item_weapon_skills[pProto->SubClass]);
+                break;
+            case ITEM_CLASS_ARMOR:
+                canUseItem = player->HasSkill(item_armor_skills[pProto->SubClass]);
+                break;
+            default:
+                canUseItem = false;
+                break;
         }
     }
 
