@@ -1464,7 +1464,7 @@ void World::Update(uint32 diff)
         LoginDatabase.PExecute("UPDATE uptime SET uptime = %u, maxplayers = %u WHERE realmid = %u AND starttime = " UI64FMTD, tmpDiff, maxClientsNum, realmID, uint64(m_startTime));
     }
 
-    sMapMgr.SetMaxPlayerLevel();
+    sMapMgr.SetBestPlayer();
 
     /// <li> Handle all other objects
     ///- Update objects (maps, transport, creatures,...)

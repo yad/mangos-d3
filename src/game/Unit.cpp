@@ -199,9 +199,9 @@ Unit::Unit() :
     m_attackTimer[BASE_ATTACK]   = 0;
     m_attackTimer[OFF_ATTACK]    = 0;
     m_attackTimer[RANGED_ATTACK] = 0;
-    m_modAttackSpeedPct[BASE_ATTACK] = 1.0f;
-    m_modAttackSpeedPct[OFF_ATTACK] = 1.0f;
-    m_modAttackSpeedPct[RANGED_ATTACK] = 1.0f;
+    m_modAttackSpeedPct[BASE_ATTACK] = 0.33f;
+    m_modAttackSpeedPct[OFF_ATTACK] = 0.33f;
+    m_modAttackSpeedPct[RANGED_ATTACK] = 0.33f;
 
     m_extraAttacks = 0;
 
@@ -2854,7 +2854,13 @@ uint32 Unit::CalculateDamage(WeaponAttackType attType, bool normalized)
     float min_damage, max_damage;
 
     if (normalized && GetTypeId() == TYPEID_PLAYER)
+    {
         ((Player*)this)->CalculateMinMaxDamage(attType, normalized, min_damage, max_damage);
+    }
+    else if (GetTypeId() == TYPEID_UNIT)
+    {
+        ((Creature*)this)->CalculateMinMaxDamage(attType, normalized, min_damage, max_damage);
+    }
     else
     {
         switch (attType)

@@ -2765,37 +2765,125 @@ bool Creature::IsTappedBy(Player* plr) const
 
 void Creature::SetStatsBasedOnPlayerMaxLevel()
 {
+    Player* player = sMapMgr.GetBestPlayer();
+    if (!player || !player->IsInWorld())
+    {
+        // Prevent crash or strage behavior
+        return;
+    }
+
     uint32 maxPlayerLevel = sMapMgr.GetMaxPlayerLevel();
     uint32 currentLevel = this->getLevel();
     if (currentLevel != maxPlayerLevel)
     {
-        float ratio = float(maxPlayerLevel) / float(currentLevel);
+        float difficulty = 0.5f; // TODO: inject difficulty here
 
         this->SetLevel(maxPlayerLevel);
 
-        this->SetHealth(this->GetHealth() * ratio);
-        this->SetMaxHealth(this->GetMaxHealth() * ratio);
+        float currentHealth = this->GetMaxHealth();
+        this->SetMaxHealth(player->GetMaxHealth() * difficulty);
+        if (!this->isInCombat())
+        {
+            this->SetHealth(this->GetMaxHealth());
+        }
 
         Powers currentPower = this->GetPowerType();
-        this->SetPower(currentPower, this->GetPower(currentPower) * ratio);
-        this->SetMaxPower(currentPower, this->GetMaxPower(currentPower) * ratio);
+        float ratio = this->GetMaxHealth() / currentHealth;
+        this->SetMaxPower(currentPower, this->GetMaxPower(currentPower) * ratio * difficulty);
+        if (!this->isInCombat())
+        {
+            this->SetPower(currentPower, this->GetMaxPower(currentPower));
+        }
 
-        this->SetArmor(this->GetArmor() * ratio);
+        this->SetArmor(player->GetArmor() * difficulty);
 
-        this->SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, this->m_weaponDamage[BASE_ATTACK][MINDAMAGE] * ratio);
-        this->SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, this->m_weaponDamage[BASE_ATTACK][MAXDAMAGE] * ratio);
+        this->SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, player->GetWeaponDamageRange(BASE_ATTACK, MINDAMAGE) * difficulty);
+        this->SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, player->GetWeaponDamageRange(BASE_ATTACK, MAXDAMAGE) * difficulty);
 
-        this->SetBaseWeaponDamage(OFF_ATTACK, MINDAMAGE, this->m_weaponDamage[OFF_ATTACK][MINDAMAGE] * ratio);
-        this->SetBaseWeaponDamage(OFF_ATTACK, MAXDAMAGE, this->m_weaponDamage[OFF_ATTACK][MAXDAMAGE] * ratio);
+        this->SetBaseWeaponDamage(OFF_ATTACK, MINDAMAGE, player->GetWeaponDamageRange(OFF_ATTACK, MINDAMAGE) * difficulty);
+        this->SetBaseWeaponDamage(OFF_ATTACK, MAXDAMAGE, player->GetWeaponDamageRange(OFF_ATTACK, MAXDAMAGE) * difficulty);
 
-        this->SetFloatValue(UNIT_FIELD_MINRANGEDDAMAGE, this->m_floatValues[UNIT_FIELD_MINRANGEDDAMAGE] * ratio);
-        this->SetFloatValue(UNIT_FIELD_MAXRANGEDDAMAGE, this->m_floatValues[UNIT_FIELD_MAXRANGEDDAMAGE] * ratio);
+        this->SetFloatValue(UNIT_FIELD_MINRANGEDDAMAGE, player->GetFloatValue(UNIT_FIELD_MINRANGEDDAMAGE) * difficulty);
+        this->SetFloatValue(UNIT_FIELD_MAXRANGEDDAMAGE, player->GetFloatValue(UNIT_FIELD_MAXRANGEDDAMAGE) * difficulty);
 
-        SetModifierValue(UNIT_MOD_ATTACK_POWER, BASE_VALUE, this->m_auraModifiersGroup[UNIT_MOD_ATTACK_POWER][BASE_VALUE] * ratio);
+        this->SetInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER, player->GetInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER) * difficulty);
+        this->SetInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER_MODS, player->GetInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER_MODS) * difficulty);
+        this->SetFloatValue(UNIT_FIELD_RANGED_ATTACK_POWER_MULTIPLIER, player->GetFloatValue(UNIT_FIELD_RANGED_ATTACK_POWER_MULTIPLIER) * difficulty);
+
+        this->SetInt32Value(UNIT_FIELD_ATTACK_POWER, player->GetInt32Value(UNIT_FIELD_ATTACK_POWER) * difficulty);
+        this->SetInt32Value(UNIT_FIELD_ATTACK_POWER_MODS, player->GetInt32Value(UNIT_FIELD_ATTACK_POWER_MODS) * difficulty);
+        this->SetFloatValue(UNIT_FIELD_ATTACK_POWER_MULTIPLIER, player->GetFloatValue(UNIT_FIELD_ATTACK_POWER_MULTIPLIER) * difficulty);
+
+        this->SetModifierValue(UNIT_MOD_ATTACK_POWER, BASE_VALUE, player->GetModifierValue(UNIT_MOD_ATTACK_POWER, BASE_VALUE) * difficulty);
+        this->SetModifierValue(UNIT_MOD_ATTACK_POWER, BASE_PCT, player->GetModifierValue(UNIT_MOD_ATTACK_POWER, BASE_PCT) * difficulty);
+        this->SetModifierValue(UNIT_MOD_ATTACK_POWER, TOTAL_VALUE, player->GetModifierValue(UNIT_MOD_ATTACK_POWER, TOTAL_VALUE) * difficulty);
+        this->SetModifierValue(UNIT_MOD_ATTACK_POWER, TOTAL_PCT, player->GetModifierValue(UNIT_MOD_ATTACK_POWER, TOTAL_PCT) * difficulty);
+
+        this->SetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, BASE_VALUE, player->GetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, BASE_VALUE) * difficulty);
+        this->SetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, BASE_PCT, player->GetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, BASE_PCT) * difficulty);
+        this->SetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, TOTAL_VALUE, player->GetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, TOTAL_VALUE) * difficulty);
+        this->SetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, TOTAL_PCT, player->GetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, TOTAL_PCT) * difficulty);
+
     }
 }
 
-bool Creature::CanBeModded()
+void Creature::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, float& min_damage, float& max_damage)
+{
+    UnitMods unitMod;
+    UnitMods attPower;
+
+    switch (attType)
+    {
+        case BASE_ATTACK:
+        default:
+            unitMod = UNIT_MOD_DAMAGE_MAINHAND;
+            attPower = UNIT_MOD_ATTACK_POWER;
+            break;
+        case OFF_ATTACK:
+            unitMod = UNIT_MOD_DAMAGE_OFFHAND;
+            attPower = UNIT_MOD_ATTACK_POWER;
+            break;
+        case RANGED_ATTACK:
+            unitMod = UNIT_MOD_DAMAGE_RANGED;
+            attPower = UNIT_MOD_ATTACK_POWER_RANGED;
+            break;
+    }
+
+    float att_speed = GetAPMultiplier(attType, normalized);
+
+    float base_value = GetModifierValue(unitMod, BASE_VALUE) + GetTotalAttackPowerValue(attType) / 14.0f * att_speed;
+    float base_pct = GetModifierValue(unitMod, BASE_PCT);
+    float total_value = GetModifierValue(unitMod, TOTAL_VALUE);
+    float total_pct = GetModifierValue(unitMod, TOTAL_PCT);
+
+    float weapon_mindamage = GetWeaponDamageRange(attType, MINDAMAGE);
+    float weapon_maxdamage = GetWeaponDamageRange(attType, MAXDAMAGE);
+
+    if (IsInFeralForm())                                    // check if player is druid and in cat or bear forms, non main hand attacks not allowed for this mode so not check attack type
+    {
+        uint32 lvl = getLevel();
+        if (lvl > 60)
+            lvl = 60;
+
+        weapon_mindamage = lvl * 0.85f * att_speed;
+        weapon_maxdamage = lvl * 1.25f * att_speed;
+    }
+    else if (!CanUseEquippedWeapon(attType))                // check if player not in form but still can't use weapon (broken/etc)
+    {
+        weapon_mindamage = BASE_MINDAMAGE;
+        weapon_maxdamage = BASE_MAXDAMAGE;
+    }
+    else if (attType == RANGED_ATTACK)                      // add ammo DPS to ranged damage
+    {
+        weapon_mindamage += /*GetAmmoDPS() */ att_speed;      // TODO GetAmmoDPS
+        weapon_maxdamage += /*GetAmmoDPS() */ att_speed;
+    }
+
+    min_damage = ((base_value + weapon_mindamage) * base_pct + total_value) * total_pct;
+    max_damage = ((base_value + weapon_maxdamage) * base_pct + total_value) * total_pct;
+}
+
+bool Creature::CanBeModded() const
 {
     return !this->IsTemporarySummon() && !this->IsWorldBoss() && this->GetUInt32Value(UNIT_NPC_FLAGS) == UNIT_NPC_FLAG_NONE && this->IsHostileToPlayers() && !sObjectMgr.IsUniqueCreature(GetCreatureInfo()->Entry);
 }
