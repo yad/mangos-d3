@@ -1068,10 +1068,10 @@ bool Loot::CanItemBeUsedByPlayer(ItemPrototype const* pProto, Player* player)
         switch (pProto->Class)
         {
             case ITEM_CLASS_WEAPON:
-                canUseItem = player->HasSkill(item_weapon_skills[pProto->SubClass]);
+                canUseItem = player->HasSkill(item_weapon_skills[pProto->SubClass]) && player->IsBestWeaponSkill(item_weapon_skills[pProto->SubClass]);
                 break;
             case ITEM_CLASS_ARMOR:
-                canUseItem = player->HasSkill(item_armor_skills[pProto->SubClass]);
+                canUseItem = player->HasSkill(item_armor_skills[pProto->SubClass]) && player->IsBestArmorSkill(item_armor_skills[pProto->SubClass]);
                 break;
             default:
                 canUseItem = false;

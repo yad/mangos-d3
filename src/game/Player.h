@@ -1905,6 +1905,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         int16 GetSkillPermBonusValue(uint32 skill) const;
         int16 GetSkillTempBonusValue(uint32 skill) const;
         bool HasSkill(uint32 skill) const;
+        bool IsBestArmorSkill(const uint32 item_armor_skill) const;
+        bool IsBestWeaponSkill(const uint32 item_weapon_skill) const;
         void learnSkillRewardedSpells(uint32 id, uint32 value);
 
         WorldLocation& GetTeleportDest() { return m_teleport_dest; }

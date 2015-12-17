@@ -199,9 +199,9 @@ Unit::Unit() :
     m_attackTimer[BASE_ATTACK]   = 0;
     m_attackTimer[OFF_ATTACK]    = 0;
     m_attackTimer[RANGED_ATTACK] = 0;
-    m_modAttackSpeedPct[BASE_ATTACK] = 0.33f;
-    m_modAttackSpeedPct[OFF_ATTACK] = 0.33f;
-    m_modAttackSpeedPct[RANGED_ATTACK] = 0.33f;
+    m_modAttackSpeedPct[BASE_ATTACK] = 1.0f;
+    m_modAttackSpeedPct[OFF_ATTACK] = 1.0f;
+    m_modAttackSpeedPct[RANGED_ATTACK] = 1.0f;
 
     m_extraAttacks = 0;
 

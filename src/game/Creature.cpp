@@ -2803,16 +2803,25 @@ void Creature::SetStatsBasedOnPlayerMaxLevel()
         this->SetBaseWeaponDamage(OFF_ATTACK, MINDAMAGE, player->GetWeaponDamageRange(OFF_ATTACK, MINDAMAGE) * difficulty);
         this->SetBaseWeaponDamage(OFF_ATTACK, MAXDAMAGE, player->GetWeaponDamageRange(OFF_ATTACK, MAXDAMAGE) * difficulty);
 
+        float mobAttackTimeDiviser = 0.5f;
+        this->SetFloatValue(UNIT_FIELD_BASEATTACKTIME, player->GetFloatValue(UNIT_FIELD_BASEATTACKTIME) / difficulty * mobAttackTimeDiviser);
+        this->SetFloatValue(UNIT_FIELD_BASEATTACKTIME + 1, player->GetFloatValue(UNIT_FIELD_BASEATTACKTIME + 1) / difficulty * mobAttackTimeDiviser);
+        this->SetFloatValue(UNIT_FIELD_RANGEDATTACKTIME, player->GetFloatValue(UNIT_FIELD_RANGEDATTACKTIME) / difficulty * mobAttackTimeDiviser);
+
+        this->SetFloatValue(UNIT_FIELD_MINDAMAGE, player->GetFloatValue(UNIT_FIELD_MINDAMAGE) * difficulty);
+        this->SetFloatValue(UNIT_FIELD_MAXDAMAGE, player->GetFloatValue(UNIT_FIELD_MAXDAMAGE) * difficulty);
+        this->SetFloatValue(UNIT_FIELD_MINOFFHANDDAMAGE, player->GetFloatValue(UNIT_FIELD_MINOFFHANDDAMAGE) * difficulty);
+        this->SetFloatValue(UNIT_FIELD_MAXOFFHANDDAMAGE, player->GetFloatValue(UNIT_FIELD_MAXOFFHANDDAMAGE) * difficulty);
         this->SetFloatValue(UNIT_FIELD_MINRANGEDDAMAGE, player->GetFloatValue(UNIT_FIELD_MINRANGEDDAMAGE) * difficulty);
         this->SetFloatValue(UNIT_FIELD_MAXRANGEDDAMAGE, player->GetFloatValue(UNIT_FIELD_MAXRANGEDDAMAGE) * difficulty);
-
-        this->SetInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER, player->GetInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER) * difficulty);
-        this->SetInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER_MODS, player->GetInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER_MODS) * difficulty);
-        this->SetFloatValue(UNIT_FIELD_RANGED_ATTACK_POWER_MULTIPLIER, player->GetFloatValue(UNIT_FIELD_RANGED_ATTACK_POWER_MULTIPLIER) * difficulty);
 
         this->SetInt32Value(UNIT_FIELD_ATTACK_POWER, player->GetInt32Value(UNIT_FIELD_ATTACK_POWER) * difficulty);
         this->SetInt32Value(UNIT_FIELD_ATTACK_POWER_MODS, player->GetInt32Value(UNIT_FIELD_ATTACK_POWER_MODS) * difficulty);
         this->SetFloatValue(UNIT_FIELD_ATTACK_POWER_MULTIPLIER, player->GetFloatValue(UNIT_FIELD_ATTACK_POWER_MULTIPLIER) * difficulty);
+
+        this->SetInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER, player->GetInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER) * difficulty);
+        this->SetInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER_MODS, player->GetInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER_MODS) * difficulty);
+        this->SetFloatValue(UNIT_FIELD_RANGED_ATTACK_POWER_MULTIPLIER, player->GetFloatValue(UNIT_FIELD_RANGED_ATTACK_POWER_MULTIPLIER) * difficulty);
 
         this->SetModifierValue(UNIT_MOD_ATTACK_POWER, BASE_VALUE, player->GetModifierValue(UNIT_MOD_ATTACK_POWER, BASE_VALUE) * difficulty);
         this->SetModifierValue(UNIT_MOD_ATTACK_POWER, BASE_PCT, player->GetModifierValue(UNIT_MOD_ATTACK_POWER, BASE_PCT) * difficulty);
@@ -2823,7 +2832,6 @@ void Creature::SetStatsBasedOnPlayerMaxLevel()
         this->SetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, BASE_PCT, player->GetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, BASE_PCT) * difficulty);
         this->SetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, TOTAL_VALUE, player->GetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, TOTAL_VALUE) * difficulty);
         this->SetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, TOTAL_PCT, player->GetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, TOTAL_PCT) * difficulty);
-
     }
 }
 

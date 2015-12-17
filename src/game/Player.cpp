@@ -2054,16 +2054,12 @@ void Player::RewardRage(uint32 damage, uint32 weaponSpeedHitFactor, bool attacke
 void Player::RegenerateAll(uint32 diff)
 {
     // Not in combat or they have regeneration
-    if (!isInCombat() || HasAuraType(SPELL_AURA_MOD_REGEN_DURING_COMBAT) ||
-            HasAuraType(SPELL_AURA_MOD_HEALTH_REGEN_IN_COMBAT) || IsPolymorphed())
+    RegenerateHealth(diff);
+    if (!HasAuraType(SPELL_AURA_INTERRUPT_REGEN))
     {
-        RegenerateHealth(diff);
-        if (!isInCombat() && !HasAuraType(SPELL_AURA_INTERRUPT_REGEN))
-        {
-            Regenerate(POWER_RAGE, diff);
-            if (getClass() == CLASS_DEATH_KNIGHT)
-                Regenerate(POWER_RUNIC_POWER, diff);
-        }
+        Regenerate(POWER_RAGE, diff);
+        if (getClass() == CLASS_DEATH_KNIGHT)
+            Regenerate(POWER_RUNIC_POWER, diff);
     }
 
     Regenerate(POWER_ENERGY, diff);
@@ -2187,16 +2183,15 @@ void Player::RegenerateHealth(uint32 diff)
     if (IsPolymorphed())
         addvalue = (float)GetMaxHealth() / 3;
     // normal regen case (maybe partly in combat case)
-    else if (!isInCombat() || HasAuraType(SPELL_AURA_MOD_REGEN_DURING_COMBAT))
+    else
     {
-        addvalue = OCTRegenHPPerSpirit() * HealthIncreaseRate;
-        if (!isInCombat())
-        {
-            AuraList const& mModHealthRegenPct = GetAurasByType(SPELL_AURA_MOD_HEALTH_REGEN_PERCENT);
-            for (AuraList::const_iterator i = mModHealthRegenPct.begin(); i != mModHealthRegenPct.end(); ++i)
-                addvalue *= (100.0f + (*i)->GetModifier()->m_amount) / 100.0f;
-        }
-        else if (HasAuraType(SPELL_AURA_MOD_REGEN_DURING_COMBAT))
+        addvalue = OCTRegenHPPerSpirit() * HealthIncreaseRate * 3.0f;
+
+        AuraList const& mModHealthRegenPct = GetAurasByType(SPELL_AURA_MOD_HEALTH_REGEN_PERCENT);
+        for (AuraList::const_iterator i = mModHealthRegenPct.begin(); i != mModHealthRegenPct.end(); ++i)
+            addvalue *= (100.0f + (*i)->GetModifier()->m_amount) / 100.0f;
+
+        if (this->isInCombat() && HasAuraType(SPELL_AURA_MOD_REGEN_DURING_COMBAT))
             addvalue *= GetTotalAuraModifier(SPELL_AURA_MOD_REGEN_DURING_COMBAT) / 100.0f;
 
         if (!IsStandState())
@@ -5894,6 +5889,54 @@ bool Player::HasSkill(uint32 skill) const
 
     SkillStatusMap::const_iterator itr = mSkillStatus.find(skill);
     return (itr != mSkillStatus.end() && itr->second.uState != SKILL_DELETED);
+}
+
+bool Player::IsBestWeaponSkill(const uint32 weapon_skill) const
+{
+    switch (weapon_skill)
+    {
+        case SKILL_STAVES:
+        case SKILL_DAGGERS:
+            return !this->HasSkill(SKILL_2H_AXES) && !this->HasSkill(SKILL_2H_SWORDS) && !this->HasSkill(SKILL_2H_MACES);
+        case SKILL_2H_AXES:
+        case SKILL_2H_SWORDS:
+        case SKILL_2H_MACES:
+        case SKILL_POLEARMS:
+            return true;
+        case SKILL_AXES:
+        case SKILL_SWORDS:
+        case SKILL_MACES:
+        case SKILL_FIST_WEAPONS:
+            return true;
+        default:
+        case SKILL_BOWS:
+        case SKILL_GUNS:
+        case SKILL_CROSSBOWS:
+        case SKILL_WANDS:
+        case SKILL_THROWN:
+        case SKILL_FISHING:
+        case SKILL_UNARMED:
+        case SKILL_ASSASSINATION: //???
+            return true;
+    }
+}
+
+bool Player::IsBestArmorSkill(const uint32 armor_skill) const
+{
+    switch(armor_skill)
+    {
+        case SKILL_MAIL:
+            return !this->HasSkill(SKILL_PLATE_MAIL);
+        case SKILL_LEATHER:
+            return !this->HasSkill(SKILL_PLATE_MAIL) && !this->HasSkill(SKILL_MAIL);
+        case SKILL_CLOTH:
+            return !this->HasSkill(SKILL_PLATE_MAIL) && !this->HasSkill(SKILL_MAIL) && !this->HasSkill(SKILL_LEATHER);
+            // Top level, checked above
+        default:
+        case SKILL_SHIELD:
+        case SKILL_PLATE_MAIL:
+            return true;
+    }
 }
 
 uint16 Player::GetSkillValue(uint32 skill) const
