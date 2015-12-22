@@ -1371,7 +1371,7 @@ void Player::Update(uint32 update_diff, uint32 p_time)
 
                 if (victim)
                 {
-                    if (!this->isInFront(victim, ATTACK_DISTANCE))
+                    if (!this->isInFront(victim, ATTACK_DISTANCE, M_PI_F / 2.0f))
                     {
                         this->SetFacingToObject(victim);
                     }
@@ -2185,7 +2185,7 @@ void Player::RegenerateHealth(uint32 diff)
     // normal regen case (maybe partly in combat case)
     else
     {
-        addvalue = OCTRegenHPPerSpirit() * HealthIncreaseRate * 3.0f;
+        addvalue = OCTRegenHPPerSpirit() * HealthIncreaseRate;
 
         AuraList const& mModHealthRegenPct = GetAurasByType(SPELL_AURA_MOD_HEALTH_REGEN_PERCENT);
         for (AuraList::const_iterator i = mModHealthRegenPct.begin(); i != mModHealthRegenPct.end(); ++i)

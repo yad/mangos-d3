@@ -153,6 +153,11 @@ Creature::Creature(CreatureSubtype subtype) : Unit(),
     m_CreatureCategoryCooldowns.clear();
 
     SetWalk(true, true);
+    // TODO fix force load level
+    //if (this->getLevel() == sMapMgr.GetMaxPlayerLevel())
+    //{
+    //    this->SetLevel(this->getLevel() + 1);
+    //}
 }
 
 Creature::~Creature()
@@ -2763,6 +2768,29 @@ bool Creature::IsTappedBy(Player* plr) const
     return false;
 }
 
+enum CreatureDifficulty
+{
+    DIFFICULTY_NORMAL = 0,
+    DIFFICULTY_HARD = 1,
+    DIFFICULTY_EXPERT = 2,
+    DIFFICULTY_MASTER = 3,
+    DIFFICULTY_T1 = 4,
+    DIFFICULTY_T2 = 5,
+    DIFFICULTY_T3 = 6,
+    DIFFICULTY_T4 = 7,
+    DIFFICULTY_T5 = 8,
+    DIFFICULTY_T6 = 9,
+    DIFFICULTY_T7 = 10,
+    DIFFICULTY_T8 = 11,
+    DIFFICULTY_T9 = 12,
+    DIFFICULTY_T10 = 13
+};
+
+#define MAX_CREATURE_DIFFICULTY = 13
+
+const float MonsterHealthTable[] = { 1.0f, 2.0f, 3.2f, 5.12f, 8.19f, 13.11f, 20.97f, 33.55f, 53.69f, 85.90f, 189.85f, 416.25f, 912.60f, 2000.82f };
+const float MonsterDamage[] = { 1.0f, 1.3f, 1.89f, 2.73f, 3.96f, 5.75f, 8.33f, 12.08f, 17.52f, 25.40f, 36.04f, 50.97f, 72.08f, 101.94f };
+
 void Creature::SetStatsBasedOnPlayerMaxLevel()
 {
     Player* player = sMapMgr.GetBestPlayer();
@@ -2774,64 +2802,84 @@ void Creature::SetStatsBasedOnPlayerMaxLevel()
 
     uint32 maxPlayerLevel = sMapMgr.GetMaxPlayerLevel();
     uint32 currentLevel = this->getLevel();
+
     if (currentLevel != maxPlayerLevel)
     {
-        float difficulty = 0.5f; // TODO: inject difficulty here
+        float mindamage;
+        float maxdamage;
+
+        CreatureDifficulty gameDifficulty = DIFFICULTY_MASTER;  // TODO: inject difficulty here
+        float healthBonus = MonsterHealthTable[gameDifficulty];
+        float damageBonus = MonsterDamage[gameDifficulty];
+
+        float d3HealthMultiplier = 0.57f * 0.24f; // (0.1368f)
+        float d3DamageMultiplier = 0.57f * 0.44f * 0.57f; // (0.142956f)
 
         this->SetLevel(maxPlayerLevel);
 
-        float currentHealth = this->GetMaxHealth();
-        this->SetMaxHealth(player->GetMaxHealth() * difficulty);
+        //PlayerLevelInfo info;
+        //sObjectMgr.GetPlayerLevelInfo(getRace(), getClass(), maxPlayerLevel, &info);
+
+        PlayerClassLevelInfo classInfo;
+        sObjectMgr.GetPlayerClassLevelInfo(getClass(), maxPlayerLevel, &classInfo);
+
+        //float currentHealth = this->GetMaxHealth();
+        this->SetMaxHealth(classInfo.basehealth * healthBonus * d3HealthMultiplier);
         if (!this->isInCombat())
         {
             this->SetHealth(this->GetMaxHealth());
         }
 
-        Powers currentPower = this->GetPowerType();
-        float ratio = this->GetMaxHealth() / currentHealth;
-        this->SetMaxPower(currentPower, this->GetMaxPower(currentPower) * ratio * difficulty);
-        if (!this->isInCombat())
-        {
-            this->SetPower(currentPower, this->GetMaxPower(currentPower));
-        }
+        //Powers currentPower = this->GetPowerType();
+        //float ratio = this->GetMaxHealth() / currentHealth;
+        //this->SetMaxPower(currentPower, this->GetMaxPower(currentPower) * ratio * healthBonus * bonusMultiplier);
+        //if (!this->isInCombat())
+        //{
+        //    this->SetPower(currentPower, this->GetMaxPower(currentPower));
+        //}
 
-        this->SetArmor(player->GetArmor() * difficulty);
+        //this->SetArmor(player->GetArmor());
 
-        this->SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, player->GetWeaponDamageRange(BASE_ATTACK, MINDAMAGE) * difficulty);
-        this->SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, player->GetWeaponDamageRange(BASE_ATTACK, MAXDAMAGE) * difficulty);
+        CalculateMinMaxDamage(BASE_ATTACK, false, mindamage, maxdamage);
+        this->SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, mindamage * damageBonus * d3DamageMultiplier);
+        this->SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, maxdamage * damageBonus * d3DamageMultiplier);
 
-        //this->SetBaseWeaponDamage(OFF_ATTACK, MINDAMAGE, player->GetWeaponDamageRange(OFF_ATTACK, MINDAMAGE) * difficulty);
-        //this->SetBaseWeaponDamage(OFF_ATTACK, MAXDAMAGE, player->GetWeaponDamageRange(OFF_ATTACK, MAXDAMAGE) * difficulty);
+        this->SetBaseWeaponDamage(OFF_ATTACK, MINDAMAGE, 0.0f);
+        this->SetBaseWeaponDamage(OFF_ATTACK, MAXDAMAGE, 0.0f);
 
-        float mobAttackTimeDiviser = 0.5f;
-        this->SetFloatValue(UNIT_FIELD_BASEATTACKTIME, player->GetFloatValue(UNIT_FIELD_BASEATTACKTIME) / difficulty * mobAttackTimeDiviser);
-        this->SetFloatValue(UNIT_FIELD_BASEATTACKTIME + 1, player->GetFloatValue(UNIT_FIELD_BASEATTACKTIME + 1) / difficulty * mobAttackTimeDiviser);
-        this->SetFloatValue(UNIT_FIELD_RANGEDATTACKTIME, player->GetFloatValue(UNIT_FIELD_RANGEDATTACKTIME) / difficulty * mobAttackTimeDiviser);
+        this->SetFloatValue(UNIT_FIELD_BASEATTACKTIME, float(urand(2000, 6000)));
+        this->SetFloatValue(UNIT_FIELD_BASEATTACKTIME + 1, float(urand(2000, 6000)));
+        this->SetFloatValue(UNIT_FIELD_RANGEDATTACKTIME, float(urand(2000, 6000)));
 
-        this->SetFloatValue(UNIT_FIELD_MINDAMAGE, player->GetFloatValue(UNIT_FIELD_MINDAMAGE) * difficulty);
-        this->SetFloatValue(UNIT_FIELD_MAXDAMAGE, player->GetFloatValue(UNIT_FIELD_MAXDAMAGE) * difficulty);
-        this->SetFloatValue(UNIT_FIELD_MINOFFHANDDAMAGE, player->GetFloatValue(UNIT_FIELD_MINOFFHANDDAMAGE) * difficulty);
-        this->SetFloatValue(UNIT_FIELD_MAXOFFHANDDAMAGE, player->GetFloatValue(UNIT_FIELD_MAXOFFHANDDAMAGE) * difficulty);
-        this->SetFloatValue(UNIT_FIELD_MINRANGEDDAMAGE, player->GetFloatValue(UNIT_FIELD_MINRANGEDDAMAGE) * difficulty);
-        this->SetFloatValue(UNIT_FIELD_MAXRANGEDDAMAGE, player->GetFloatValue(UNIT_FIELD_MAXRANGEDDAMAGE) * difficulty);
+        CalculateMinMaxDamage(BASE_ATTACK, false, mindamage, maxdamage);
+        this->SetFloatValue(UNIT_FIELD_MINDAMAGE, mindamage * damageBonus * d3DamageMultiplier);
+        this->SetFloatValue(UNIT_FIELD_MAXDAMAGE, maxdamage * damageBonus * d3DamageMultiplier);
 
-        this->SetInt32Value(UNIT_FIELD_ATTACK_POWER, player->GetInt32Value(UNIT_FIELD_ATTACK_POWER) * difficulty);
-        this->SetInt32Value(UNIT_FIELD_ATTACK_POWER_MODS, player->GetInt32Value(UNIT_FIELD_ATTACK_POWER_MODS) * difficulty);
-        this->SetFloatValue(UNIT_FIELD_ATTACK_POWER_MULTIPLIER, player->GetFloatValue(UNIT_FIELD_ATTACK_POWER_MULTIPLIER) * difficulty);
+        CalculateMinMaxDamage(OFF_ATTACK, false, mindamage, maxdamage);
+        this->SetFloatValue(UNIT_FIELD_MINOFFHANDDAMAGE, mindamage * damageBonus * d3DamageMultiplier);
+        this->SetFloatValue(UNIT_FIELD_MAXOFFHANDDAMAGE, maxdamage * damageBonus * d3DamageMultiplier);
 
-        this->SetInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER, player->GetInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER) * difficulty);
-        this->SetInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER_MODS, player->GetInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER_MODS) * difficulty);
-        this->SetFloatValue(UNIT_FIELD_RANGED_ATTACK_POWER_MULTIPLIER, player->GetFloatValue(UNIT_FIELD_RANGED_ATTACK_POWER_MULTIPLIER) * difficulty);
+        CalculateMinMaxDamage(RANGED_ATTACK, false, mindamage, maxdamage);
+        this->SetFloatValue(UNIT_FIELD_MINRANGEDDAMAGE, mindamage * damageBonus * d3DamageMultiplier);
+        this->SetFloatValue(UNIT_FIELD_MAXRANGEDDAMAGE, maxdamage * damageBonus * d3DamageMultiplier);
 
-        this->SetModifierValue(UNIT_MOD_ATTACK_POWER, BASE_VALUE, player->GetModifierValue(UNIT_MOD_ATTACK_POWER, BASE_VALUE) * difficulty);
-        this->SetModifierValue(UNIT_MOD_ATTACK_POWER, BASE_PCT, player->GetModifierValue(UNIT_MOD_ATTACK_POWER, BASE_PCT) * difficulty);
-        this->SetModifierValue(UNIT_MOD_ATTACK_POWER, TOTAL_VALUE, player->GetModifierValue(UNIT_MOD_ATTACK_POWER, TOTAL_VALUE) * difficulty);
-        this->SetModifierValue(UNIT_MOD_ATTACK_POWER, TOTAL_PCT, player->GetModifierValue(UNIT_MOD_ATTACK_POWER, TOTAL_PCT) * difficulty);
+        this->SetInt32Value(UNIT_FIELD_ATTACK_POWER, player->GetInt32Value(UNIT_FIELD_ATTACK_POWER) * damageBonus * d3DamageMultiplier);
+        this->SetInt32Value(UNIT_FIELD_ATTACK_POWER_MODS, player->GetInt32Value(UNIT_FIELD_ATTACK_POWER_MODS) * damageBonus * d3DamageMultiplier);
+        this->SetFloatValue(UNIT_FIELD_ATTACK_POWER_MULTIPLIER, player->GetFloatValue(UNIT_FIELD_ATTACK_POWER_MULTIPLIER) * damageBonus * d3DamageMultiplier);
 
-        this->SetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, BASE_VALUE, player->GetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, BASE_VALUE) * difficulty);
-        this->SetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, BASE_PCT, player->GetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, BASE_PCT) * difficulty);
-        this->SetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, TOTAL_VALUE, player->GetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, TOTAL_VALUE) * difficulty);
-        this->SetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, TOTAL_PCT, player->GetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, TOTAL_PCT) * difficulty);
+        this->SetInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER, player->GetInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER) * damageBonus * d3DamageMultiplier);
+        this->SetInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER_MODS, player->GetInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER_MODS) * damageBonus * d3DamageMultiplier);
+        this->SetFloatValue(UNIT_FIELD_RANGED_ATTACK_POWER_MULTIPLIER, player->GetFloatValue(UNIT_FIELD_RANGED_ATTACK_POWER_MULTIPLIER) * damageBonus * d3DamageMultiplier);
+
+        this->SetModifierValue(UNIT_MOD_ATTACK_POWER, BASE_VALUE, player->GetModifierValue(UNIT_MOD_ATTACK_POWER, BASE_VALUE) * damageBonus * d3DamageMultiplier);
+        this->SetModifierValue(UNIT_MOD_ATTACK_POWER, BASE_PCT, player->GetModifierValue(UNIT_MOD_ATTACK_POWER, BASE_PCT) * damageBonus * d3DamageMultiplier);
+        this->SetModifierValue(UNIT_MOD_ATTACK_POWER, TOTAL_VALUE, player->GetModifierValue(UNIT_MOD_ATTACK_POWER, TOTAL_VALUE) * damageBonus * d3DamageMultiplier);
+        this->SetModifierValue(UNIT_MOD_ATTACK_POWER, TOTAL_PCT, player->GetModifierValue(UNIT_MOD_ATTACK_POWER, TOTAL_PCT) * damageBonus * d3DamageMultiplier);
+
+        this->SetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, BASE_VALUE, player->GetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, BASE_VALUE) * damageBonus * d3DamageMultiplier);
+        this->SetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, BASE_PCT, player->GetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, BASE_PCT) * damageBonus * d3DamageMultiplier);
+        this->SetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, TOTAL_VALUE, player->GetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, TOTAL_VALUE) * damageBonus * d3DamageMultiplier);
+        this->SetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, TOTAL_PCT, player->GetModifierValue(UNIT_MOD_ATTACK_POWER_RANGED, TOTAL_PCT) * damageBonus * d3DamageMultiplier);
     }
 }
 
@@ -2916,7 +2964,7 @@ void Creature::SummonCreaturePool()
 {
     if (this->CanBeModded())
     {
-        for (int i = 0; i < urand(0, 4); i++)
+        for (uint32 i = 0; i < urand(0, 4); i++)
         {
             Creature* creature = this->SummonCreature(GetCreatureInfo()->Entry, this->GetPositionX() + summonPositionsX[i], this->GetPositionY() + summonPositionsY[i], this->GetPositionZ(), 0.0, TEMPSUMMON_DEAD_DESPAWN, 0);
         }

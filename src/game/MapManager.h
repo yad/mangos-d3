@@ -93,7 +93,7 @@ class MapManager : public MaNGOS::Singleton<MapManager, MaNGOS::ClassLevelLockab
 
         void SetBestPlayer()
         {
-            uint32 maxLevel = 1;
+            uint32 maxLevel = 0;
             Player* bestPlayer = nullptr;
             HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
             for (HashMapHolder<Player>::MapType::iterator iter = m.begin(); iter != m.end(); ++iter)
