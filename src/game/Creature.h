@@ -796,6 +796,8 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
     private:
         bool IsPlayerSummon() const;
+        uint32 m_currentLevel = 0;
+        GameDifficulty m_currentDifficulty = DIFFICULTY_NORMAL;
         GridReference<Creature> m_gridRef;
         CreatureInfo const* m_creatureInfo;                 // in difficulty mode > 0 can different from ObjMgr::GetCreatureTemplate(GetEntry())
 };

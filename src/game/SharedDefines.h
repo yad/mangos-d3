@@ -3122,4 +3122,24 @@ enum LootType
     LOOT_SPELL          = 24,
 };
 
+enum GameDifficulty
+{
+    DIFFICULTY_NORMAL = 0,
+    DIFFICULTY_HARD   = 1,
+    DIFFICULTY_EXPERT = 2,
+    DIFFICULTY_MASTER = 3,
+    DIFFICULTY_T1     = 4,
+    DIFFICULTY_T2     = 5,
+    DIFFICULTY_T3     = 6,
+    DIFFICULTY_T4     = 7,
+    DIFFICULTY_T5     = 8,
+    DIFFICULTY_T6     = 9,
+    DIFFICULTY_T7     = 10,
+    DIFFICULTY_T8     = 11,
+    DIFFICULTY_T9     = 12,
+    DIFFICULTY_T10    = 13
+};
+
+#define MAX_GAME_DIFFICULTY 13
+
 #endif

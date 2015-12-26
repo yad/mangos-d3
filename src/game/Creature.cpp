@@ -2768,26 +2768,6 @@ bool Creature::IsTappedBy(Player* plr) const
     return false;
 }
 
-enum CreatureDifficulty
-{
-    DIFFICULTY_NORMAL = 0,
-    DIFFICULTY_HARD = 1,
-    DIFFICULTY_EXPERT = 2,
-    DIFFICULTY_MASTER = 3,
-    DIFFICULTY_T1 = 4,
-    DIFFICULTY_T2 = 5,
-    DIFFICULTY_T3 = 6,
-    DIFFICULTY_T4 = 7,
-    DIFFICULTY_T5 = 8,
-    DIFFICULTY_T6 = 9,
-    DIFFICULTY_T7 = 10,
-    DIFFICULTY_T8 = 11,
-    DIFFICULTY_T9 = 12,
-    DIFFICULTY_T10 = 13
-};
-
-#define MAX_CREATURE_DIFFICULTY = 13
-
 const float MonsterHealthTable[] = { 1.0f, 2.0f, 3.2f, 5.12f, 8.19f, 13.11f, 20.97f, 33.55f, 53.69f, 85.90f, 189.85f, 416.25f, 912.60f, 2000.82f };
 const float MonsterDamage[] = { 1.0f, 1.3f, 1.89f, 2.73f, 3.96f, 5.75f, 8.33f, 12.08f, 17.52f, 25.40f, 36.04f, 50.97f, 72.08f, 101.94f };
 
@@ -2801,14 +2781,15 @@ void Creature::SetStatsBasedOnPlayerMaxLevel()
     }
 
     uint32 maxPlayerLevel = sMapMgr.GetMaxPlayerLevel();
+    GameDifficulty gameDifficulty = sMapMgr.GetCurrentDifficulty();
     uint32 currentLevel = this->getLevel();
 
-    if (currentLevel != maxPlayerLevel)
+    bool needToRefreshStats = currentLevel != maxPlayerLevel || m_currentLevel != maxPlayerLevel || m_currentDifficulty != gameDifficulty;
+    if (needToRefreshStats)
     {
         float mindamage;
         float maxdamage;
 
-        CreatureDifficulty gameDifficulty = DIFFICULTY_MASTER;  // TODO: inject difficulty here
         float healthBonus = MonsterHealthTable[gameDifficulty];
         float damageBonus = MonsterDamage[gameDifficulty];
 
@@ -2816,6 +2797,8 @@ void Creature::SetStatsBasedOnPlayerMaxLevel()
         float d3DamageMultiplier = 0.57f * 0.44f * 0.57f; // (0.142956f)
 
         this->SetLevel(maxPlayerLevel);
+        m_currentLevel = maxPlayerLevel;
+        m_currentDifficulty = gameDifficulty;
 
         //PlayerLevelInfo info;
         //sObjectMgr.GetPlayerLevelInfo(getRace(), getClass(), maxPlayerLevel, &info);

@@ -127,6 +127,16 @@ class MapManager : public MaNGOS::Singleton<MapManager, MaNGOS::ClassLevelLockab
             return m_bestPlayer;
         }
 
+        void SetCurrentDifficulty(GameDifficulty difficulty)
+        {
+            m_currentDifficulty = difficulty;
+        }
+
+        GameDifficulty GetCurrentDifficulty() const
+        {
+            return m_currentDifficulty;
+        }
+
         static bool ExistMapAndVMap(uint32 mapid, float x, float y);
         static bool IsValidMAP(uint32 mapid);
 
@@ -212,8 +222,9 @@ class MapManager : public MaNGOS::Singleton<MapManager, MaNGOS::ClassLevelLockab
         MapMapType i_maps;
         IntervalTimer i_timer;
 
-        uint32 m_maxPlayerLevel = 1;
+        uint32 m_maxPlayerLevel = -1;
         Player* m_bestPlayer = nullptr;
+        GameDifficulty m_currentDifficulty = DIFFICULTY_NORMAL;
 };
 
 template<typename Do>

@@ -5234,3 +5234,39 @@ bool ChatHandler::HandleMmapStatsCommand(char* /*args*/)
 
     return true;
 }
+
+const std::string LocalefrFRDifficultyTable[] = { "Normal", "Difficile", "Expert", "Calvaire", "Tourment 1", "Tourment 2", "Tourment 3", "Tourment 4", "Tourment 5", "Tourment 6", "Tourment 7", "Tourment 8", "Tourment 9", "Tourment 10" };
+
+bool ChatHandler::HandleDifficultySetCommand(char* args)
+{
+    if (!*args)
+    {
+        PSendSysMessage("Available difficulties:");
+        for (uint8 i = 0; i <= MAX_GAME_DIFFICULTY; i++)
+        {
+            PSendSysMessage("- %u: %s", i , LocalefrFRDifficultyTable[i]);
+        }
+        PSendSysMessage("Current difficulty: %s.", LocalefrFRDifficultyTable[sMapMgr.GetCurrentDifficulty()]);
+    }
+    else
+    {
+        uint8 difficulty = (uint8)atoi(args);
+
+        if (difficulty <= MAX_GAME_DIFFICULTY)
+        {
+            sMapMgr.SetCurrentDifficulty((GameDifficulty)difficulty);
+            PSendSysMessage("Current difficulty: %s.", LocalefrFRDifficultyTable[sMapMgr.GetCurrentDifficulty()]);
+        }
+        else
+        {
+            PSendSysMessage("Selected difficulty doesn't exist.");
+            PSendSysMessage("Available difficulties:");
+            for (uint8 i = 0; i <= MAX_GAME_DIFFICULTY; i++)
+            {
+                PSendSysMessage("- %u: %s", i, LocalefrFRDifficultyTable[i]);
+            }
+        }
+    }
+
+    return true;
+}
