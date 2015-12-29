@@ -3444,7 +3444,27 @@ void ObjectMgr::GetPlayerLevelInfo(uint32 race, uint32 class_, uint32 level, Pla
         return;
 
     if (level <= sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL))
+    {
         *info = pInfo->levelInfo[level - 1];
+        int maxStat = STAT_STRENGTH;
+        for (int i = STAT_STRENGTH; i < MAX_STATS; ++i)
+        {
+            if (info->stats[i] > info->stats[maxStat])
+            {
+                maxStat = i;
+            }
+        }
+
+        float oldMaxStatValue = float(info->stats[maxStat]);
+        info->stats[maxStat] = 3 * level + pInfo->levelInfo[0].stats[maxStat];
+        for (int i = STAT_STRENGTH; i < MAX_STATS; ++i)
+        {
+            if (i != maxStat)
+            {
+                info->stats[i] = uint8(float(info->stats[i]) * float(info->stats[maxStat]) / oldMaxStatValue);
+            }
+        }
+    }
     else
         BuildPlayerLevelInfo(race, class_, level, info);
 }

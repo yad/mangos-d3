@@ -610,6 +610,30 @@ class MANGOS_DLL_SPEC Creature : public Unit
         static float _GetSpellDamageMod(int32 Rank);        ///< Get custom factor to scale spell damage (default 1, CONFIG_FLOAT_RATE_*_SPELLDAMAGE)
         void CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, float& min_damage, float& max_damage);
 
+        float GetMeleeCritFromAgility();
+        void GetDodgeFromAgility(float& diminishing, float& nondiminishing);
+        float GetSpellCritFromIntellect();
+        float OCTRegenHPPerSpirit();
+        float OCTRegenMPPerSpirit();
+        float GetRatingMultiplier(CombatRating cr) const;
+        float GetRatingBonusValue(CombatRating cr) const;
+
+        void InitStatsForLevel();
+        float GetHealthBonusFromStamina();
+        float GetManaBonusFromIntellect();
+
+        float GetExpertiseDodgeOrParryReduction(WeaponAttackType attType) const;
+        void UpdateBlockPercentage();
+        void UpdateCritPercentage(WeaponAttackType attType);
+        void UpdateParryPercentage();
+        void UpdateMeleeHitChances();
+        void UpdateRangedHitChances();
+        void UpdateSpellHitChances();
+
+        void UpdateSpellCritChance(uint32 school);
+        void ApplyManaRegenBonus(int32 amount, bool apply);
+        void UpdateManaRegen();
+
         VendorItemData const* GetVendorItems() const;
         VendorItemData const* GetVendorTemplateItems() const;
         uint32 GetVendorItemCurrentCount(VendorItem const* vItem);

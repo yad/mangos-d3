@@ -100,10 +100,14 @@ int32 CalculateSpellDuration(SpellEntry const* spellInfo, Unit const* caster)
 
 uint32 GetSpellCastTime(SpellEntry const* spellInfo, Spell const* spell)
 {
+
     if (spell)
     {
         // some triggered spells have data only usable for client
         if (spell->IsTriggeredSpellWithRedundentCastTime())
+            return 0;
+
+        if (spell->GetCaster()->GetTypeId() == TYPEID_PLAYER)
             return 0;
 
         // spell targeted to non-trading trade slot item instant at trade success apply

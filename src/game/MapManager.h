@@ -113,18 +113,12 @@ class MapManager : public MaNGOS::Singleton<MapManager, MaNGOS::ClassLevelLockab
             if (m_maxPlayerLevel != maxLevel)
             {
                 m_maxPlayerLevel = maxLevel;
-                m_bestPlayer = bestPlayer;
             }
         }
 
         uint32 GetMaxPlayerLevel() const
         {
             return m_maxPlayerLevel;
-        }
-
-        Player* GetBestPlayer() const
-        {
-            return m_bestPlayer;
         }
 
         void SetCurrentDifficulty(GameDifficulty difficulty)
@@ -223,7 +217,6 @@ class MapManager : public MaNGOS::Singleton<MapManager, MaNGOS::ClassLevelLockab
         IntervalTimer i_timer;
 
         uint32 m_maxPlayerLevel = -1;
-        Player* m_bestPlayer = nullptr;
         GameDifficulty m_currentDifficulty = DIFFICULTY_NORMAL;
 };
 
