@@ -575,6 +575,28 @@ Player::Player(WorldSession* session): Unit(), m_mover(this), m_camera(this), m_
     m_lastFallZ = 0;
 
     m_cachedGS = 0;
+
+    /*
+    2.5f,                                                   // MOVE_WALK
+    7.0f,                                                   // MOVE_RUN
+    4.5f,                                                   // MOVE_RUN_BACK
+    4.722222f,                                              // MOVE_SWIM
+    2.5f,                                                   // MOVE_SWIM_BACK
+    3.141594f,                                              // MOVE_TURN_RATE
+    7.0f,                                                   // MOVE_FLIGHT
+    4.5f,                                                   // MOVE_FLIGHT_BACK
+    3.14f                                                   // MOVE_PITCH_RATE
+    */
+
+    baseMoveSpeed[MOVE_WALK] = 2.5f;
+    baseMoveSpeed[MOVE_RUN] = 7.0f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARRUNSPEED);
+    baseMoveSpeed[MOVE_RUN_BACK] = 4.5f;
+    baseMoveSpeed[MOVE_SWIM] = 4.722222f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARSWIMSPEED);
+    baseMoveSpeed[MOVE_SWIM_BACK] = 2.5f;
+    baseMoveSpeed[MOVE_TURN_RATE] = 3.141594f;
+    baseMoveSpeed[MOVE_FLIGHT] = 7.0f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARFLIGHTSPEED);
+    baseMoveSpeed[MOVE_FLIGHT_BACK] = 4.5f;
+    baseMoveSpeed[MOVE_PITCH_RATE] = 3.14f;
 }
 
 Player::~Player()

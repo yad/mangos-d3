@@ -1300,8 +1300,17 @@ Visibility.AIRelocationNotifyDelay = 1000
 #         Default: 1
 #
 #    Rate.InstanceResetTime
-#        Multiplier for the number of days in between global raid/heroic instance resets.
-#        Default: 1
+#         Multiplier for the number of days in between global raid/heroic instance resets.
+#         Default: 1
+#
+#    Rate.CharRunSpeed
+#         Multiply the Default Player Speed (1 - Default, 1.4 - 40% faster, 0.5 - Half Movement Speed)
+#
+#    Rate.CharSwimSpeed
+#         Multiply the Default Player Speed (1 - Default, 1.4 - 40% faster, 0.5 - Half Movement Speed)
+#
+#    Rate.CharFlightSpeed
+#         Multiply the Default Player Speed (1 - Default, 1.4 - 40% faster, 0.5 - Half Movement Speed)
 #
 #    SkillGain.Crafting
 #    SkillGain.Defense
@@ -1416,6 +1425,9 @@ Rate.Reputation.Gain = 1
 Rate.Reputation.LowLevel.Kill    = 1
 Rate.Reputation.LowLevel.Quest   = 1
 Rate.InstanceResetTime = 1
+Rate.CharRunSpeed = 2.5
+Rate.CharSwimSpeed = 3.5
+Rate.CharFlightSpeed = 7.5
 SkillGain.Crafting = 1
 SkillGain.Defense = 1
 SkillGain.Gathering = 1
