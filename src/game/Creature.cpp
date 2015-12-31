@@ -3165,65 +3165,73 @@ void Creature::UpdateAttackPowerAndDamage(bool ranged)
 void Creature::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, float& min_damage, float& max_damage)
 {
     const float MonsterDamage[] = { 1.0f, 1.3f, 1.89f, 2.73f, 3.96f, 5.75f, 8.33f, 12.08f, 17.52f, 25.40f, 36.04f, 50.97f, 72.08f, 101.94f };
-    const float d3MinDamageMultiplier = 16.95f;
-    const float d3MaxDamageMultiplier = 27.12f;
 
     GameDifficulty gameDifficulty = sMapMgr.GetCurrentDifficulty();
     float damageBonus = MonsterDamage[gameDifficulty];
+    float level = float(getLevel());
+    float hp = float(GetMaxHealth());
 
-    UnitMods unitMod;
-    UnitMods attPower;
-
-    switch (attType)
+    min_damage = (1.4873f *  log(level) - 0.1681f) / level * hp * damageBonus;
+    max_damage = (2.6312f *  log(level) - 0.6672f) / level * hp * damageBonus;
+    if (min_damage <= 0.0f)
     {
-        case BASE_ATTACK:
-        default:
-            unitMod = UNIT_MOD_DAMAGE_MAINHAND;
-            attPower = UNIT_MOD_ATTACK_POWER;
-            break;
-        case OFF_ATTACK:
-            unitMod = UNIT_MOD_DAMAGE_OFFHAND;
-            attPower = UNIT_MOD_ATTACK_POWER;
-            break;
-        case RANGED_ATTACK:
-            unitMod = UNIT_MOD_DAMAGE_RANGED;
-            attPower = UNIT_MOD_ATTACK_POWER_RANGED;
-            break;
+        min_damage = MINDAMAGE;
+        max_damage = MAXDAMAGE;
     }
 
-    float att_speed = GetAPMultiplier(attType, normalized);
+    //UnitMods unitMod;
+    //UnitMods attPower;
 
-    float base_value = GetModifierValue(unitMod, BASE_VALUE) + GetTotalAttackPowerValue(attType) / 14.0f * att_speed;
-    float base_pct = GetModifierValue(unitMod, BASE_PCT);
-    float total_value = GetModifierValue(unitMod, TOTAL_VALUE);
-    float total_pct = GetModifierValue(unitMod, TOTAL_PCT);
+    //switch (attType)
+    //{
+    //    case BASE_ATTACK:
+    //    default:
+    //        unitMod = UNIT_MOD_DAMAGE_MAINHAND;
+    //        attPower = UNIT_MOD_ATTACK_POWER;
+    //        break;
+    //    case OFF_ATTACK:
+    //        unitMod = UNIT_MOD_DAMAGE_OFFHAND;
+    //        attPower = UNIT_MOD_ATTACK_POWER;
+    //        break;
+    //    case RANGED_ATTACK:
+    //        unitMod = UNIT_MOD_DAMAGE_RANGED;
+    //        attPower = UNIT_MOD_ATTACK_POWER_RANGED;
+    //        break;
+    //}
 
-    float weapon_mindamage = GetWeaponDamageRange(attType, MINDAMAGE);
-    float weapon_maxdamage = GetWeaponDamageRange(attType, MAXDAMAGE);
+    //float att_speed = GetAPMultiplier(attType, normalized);
 
-    if (IsInFeralForm())                                    // check if player is druid and in cat or bear forms, non main hand attacks not allowed for this mode so not check attack type
-    {
-        uint32 lvl = getLevel();
-        if (lvl > 60)
-            lvl = 60;
+    //float base_value = GetModifierValue(unitMod, BASE_VALUE) + GetTotalAttackPowerValue(attType) / 14.0f * att_speed;
+    //float base_pct = GetModifierValue(unitMod, BASE_PCT);
+    //float total_value = GetModifierValue(unitMod, TOTAL_VALUE);
+    //float total_pct = GetModifierValue(unitMod, TOTAL_PCT);
 
-        weapon_mindamage = lvl * 0.85f * att_speed;
-        weapon_maxdamage = lvl * 1.25f * att_speed;
-    }
-    else if (!CanUseEquippedWeapon(attType))                // check if player not in form but still can't use weapon (broken/etc)
-    {
-        weapon_mindamage = BASE_MINDAMAGE;
-        weapon_maxdamage = BASE_MAXDAMAGE;
-    }
-    else if (attType == RANGED_ATTACK)                      // add ammo DPS to ranged damage
-    {
-        const float noAmmoDpf = 0.0f;
-        weapon_mindamage += noAmmoDpf * att_speed;
-        weapon_maxdamage += noAmmoDpf * att_speed;
-    }
+    //float weapon_mindamage = GetWeaponDamageRange(attType, MINDAMAGE);
+    //float weapon_maxdamage = GetWeaponDamageRange(attType, MAXDAMAGE);
 
-    min_damage = ((base_value + weapon_mindamage) * base_pct + total_value) * total_pct * d3MinDamageMultiplier * damageBonus;
-    max_damage = ((base_value + weapon_maxdamage) * base_pct + total_value) * total_pct * d3MaxDamageMultiplier * damageBonus;
+    //if (IsInFeralForm())                                    // check if player is druid and in cat or bear forms, non main hand attacks not allowed for this mode so not check attack type
+    //{
+    //    uint32 lvl = getLevel();
+    //    if (lvl > 60)
+    //        lvl = 60;
+
+    //    weapon_mindamage = lvl * 0.85f * att_speed;
+    //    weapon_maxdamage = lvl * 1.25f * att_speed;
+    //}
+    //else if (!CanUseEquippedWeapon(attType))                // check if player not in form but still can't use weapon (broken/etc)
+    //{
+    //    weapon_mindamage = BASE_MINDAMAGE;
+    //    weapon_maxdamage = BASE_MAXDAMAGE;
+    //}
+    //else if (attType == RANGED_ATTACK)                      // add ammo DPS to ranged damage
+    //{
+    //    const float noAmmoDpf = 0.0f;
+    //    weapon_mindamage += noAmmoDpf * att_speed;
+    //    weapon_maxdamage += noAmmoDpf * att_speed;
+    //}
+
+    //min_damage = ((base_value + weapon_mindamage) * base_pct + total_value) * total_pct * damageBonus;
+    //max_damage = ((base_value + weapon_maxdamage) * base_pct + total_value) * total_pct * damageBonus;
 }
 
 void Creature::UpdateDamagePhysical(WeaponAttackType attType)
