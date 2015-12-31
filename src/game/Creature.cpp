@@ -2979,17 +2979,17 @@ void Creature::UpdateMaxHealth()
 {
     UnitMods unitMod = UNIT_MOD_HEALTH;
     const float MonsterHealthTable[] = { 1.0f, 2.0f, 3.2f, 5.12f, 8.19f, 13.11f, 20.97f, 33.55f, 53.69f, 85.90f, 189.85f, 416.25f, 912.60f, 2000.82f };
-    const float d3HealthMultiplier = uint32(this->getLevel() / 10);
 
     GameDifficulty gameDifficulty = sMapMgr.GetCurrentDifficulty();
     float healthBonus = MonsterHealthTable[gameDifficulty];
 
-    float value = GetModifierValue(unitMod, BASE_VALUE) + GetCreateHealth();
-    value *= GetModifierValue(unitMod, BASE_PCT);
-    value += GetModifierValue(unitMod, TOTAL_VALUE) + GetHealthBonusFromStamina();
-    value *= GetModifierValue(unitMod, TOTAL_PCT);
+    //float value = GetModifierValue(unitMod, BASE_VALUE) + GetCreateHealth();
+    //value *= GetModifierValue(unitMod, BASE_PCT);
+    //value += GetModifierValue(unitMod, TOTAL_VALUE) + GetHealthBonusFromStamina();
+    //value *= GetModifierValue(unitMod, TOTAL_PCT);
+    float value = float(GetCreateHealth());
 
-    SetMaxHealth((uint32)value * healthBonus * d3HealthMultiplier);
+    SetMaxHealth((uint32)value * healthBonus);
 }
 
 void Creature::UpdateMaxPower(Powers power)
@@ -3301,10 +3301,10 @@ float Creature::OCTRegenMPPerSpirit()
 void Creature::InitStatsForLevel()
 {
     uint32 _class = getClass();
-    if (_class == 0) _class = CLASS_WARRIOR;
+    //if (_class == 0) _class = CLASS_WARRIOR;
 
     uint32 race = getRace();
-    if (race == 0) race = RACE_HUMAN;
+    //if (race == 0) race = RACE_HUMAN;
 
     PlayerClassLevelInfo classInfo;
     sObjectMgr.GetPlayerClassLevelInfo(_class, getLevel(), &classInfo);
@@ -3319,13 +3319,16 @@ void Creature::InitStatsForLevel()
     SetFloatValue(UNIT_MOD_CAST_SPEED, 1.0f);
 
     // save base values (bonuses already included in stored stats
-    for (int i = STAT_STRENGTH; i < MAX_STATS; ++i)
-        SetCreateStat(Stats(i), info.stats[i]);
+    //for (int i = STAT_STRENGTH; i < MAX_STATS; ++i)
+    //    SetCreateStat(Stats(i), info.stats[i]);
 
-    for (int i = STAT_STRENGTH; i < MAX_STATS; ++i)
-        SetStat(Stats(i), info.stats[i]);
+    //for (int i = STAT_STRENGTH; i < MAX_STATS; ++i)
+    //    SetStat(Stats(i), info.stats[i]);
 
-    SetCreateHealth(classInfo.basehealth);
+    float level = float(getLevel());
+    uint32 basehealth = uint32(3.7f * exp(level / 10.0f) * level);
+    //classInfo.basehealth
+    SetCreateHealth(basehealth);
 
     // set create powers
     SetCreateMana(classInfo.basemana);
@@ -3375,7 +3378,7 @@ void Creature::InitStatsForLevel()
     for (int i = POWER_MANA; i < MAX_POWERS; ++i)
         SetMaxPower(Powers(i), GetCreatePowers(Powers(i)));
 
-    SetMaxHealth(classInfo.basehealth);                     // stamina bonus will applied later
+    SetMaxHealth(basehealth);                     // stamina bonus will applied later
 
                                                             // cleanup mounted state (it will set correctly at aura loading if player saved at mount.
     SetUInt32Value(UNIT_FIELD_MOUNTDISPLAYID, 0);
@@ -3390,7 +3393,7 @@ void Creature::InitStatsForLevel()
     //    UNIT_FLAG_SKINNABLE | UNIT_FLAG_MOUNT | UNIT_FLAG_TAXI_FLIGHT);
     //SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE);    // must be set
 
-    //SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_REGENERATE_POWER); // must be set
+    //SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_REGENERATE_POWER); // must be setv
 
     RemoveStandFlags(UNIT_STAND_FLAGS_ALL);                 // one form stealth modified bytes
     RemoveByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP | UNIT_BYTE2_FLAG_SANCTUARY);
