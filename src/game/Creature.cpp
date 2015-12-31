@@ -3173,7 +3173,7 @@ void Creature::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, 
 
     min_damage = (1.4873f *  log(level) - 0.1681f) / level * hp * damageBonus;
     max_damage = (2.6312f *  log(level) - 0.6672f) / level * hp * damageBonus;
-    if (min_damage <= 0.0f)
+    if (min_damage <= 0.0f || max_damage <= 0.0f)
     {
         min_damage = MINDAMAGE;
         max_damage = MAXDAMAGE;
