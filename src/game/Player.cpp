@@ -19895,7 +19895,7 @@ void Player::SendInitialPacketsBeforeAddToMap()
     uint32 speedtime = secsToTimeBitFields((sWorld.GetGameTime() - sWorld.GetUptime()) + (sWorld.GetUptime() * speedrate));
 
     data.Initialize(SMSG_LOGIN_SETTIMESPEED, 4 + 4 + 4);
-    data << uint32(secsToTimeBitFields(sWorld.GetGameTime()));
+    data << uint32(speedtime);
     data << (float)0.01666667f * speedrate;                 // game speed
     data << uint32(0);                                      // added in 3.1.2
     GetSession()->SendPacket(&data);
